@@ -34,6 +34,7 @@ private:
 	/** Motion controller (left hand) */
 	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true")) class UMotionControllerComponent* L_MotionController;
 
+	class USceneComponent* VRRoot = nullptr;
 	class UCameraComponent* Camera = nullptr;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Movement") float MoveSpeed = 10;
