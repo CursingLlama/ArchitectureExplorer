@@ -1,13 +1,16 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "VRCharacter.h"
+#include "Engine/World.h"
 #include "Camera/CameraComponent.h"
 #include "Components/InputComponent.h"
 #include "Components/SceneComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/StaticMeshComponent.h"
 #include "HeadMountedDisplayFunctionLibrary.h"
 #include "MotionControllerComponent.h"
 #include "XRMotionControllerBase.h" // for FXRMotionControllerBase::RightHandSourceId
+#include "DrawDebugHelpers.h"
 
 
 // Sets default values
@@ -24,32 +27,59 @@ AVRCharacter::AVRCharacter()
 	//Add camera component for the HMD to use
 	Camera = CreateDefaultSubobject<UCameraComponent>(FName("Camera"));
 	Camera->SetupAttachment(VRRoot);
+
+	DestinationMarker = CreateDefaultSubobject<UStaticMeshComponent>(FName("Destination Marker"));
+	DestinationMarker->SetupAttachment(GetRootComponent());
 	
 	
 	// Create VR Controllers.
-	//RightMotionController = CreateDefaultSubobject<UMotionControllerComponent>(TEXT("R_MotionController"));
-	//RightMotionController->MotionSource = FXRMotionControllerBase::RightHandSourceId;
-	//RightMotionController->SetupAttachment(VRRoot);
-	//L_MotionController = CreateDefaultSubobject<UMotionControllerComponent>(TEXT("L_MotionController"));
-	//L_MotionController->SetupAttachment(VRRoot);
+	RightMotionController = CreateDefaultSubobject<UMotionControllerComponent>(TEXT("R_MotionController"));
+	RightMotionController->MotionSource = FXRMotionControllerBase::RightHandSourceId;
+	RightMotionController->SetupAttachment(VRRoot);
+	RightHandMesh = CreateDefaultSubobject<UStaticMeshComponent>(FName("Right Hand Mesh"));
+	RightHandMesh->SetupAttachment(RightMotionController);
 	
+	LeftMotionController = CreateDefaultSubobject<UMotionControllerComponent>(TEXT("L_MotionController"));
+	LeftMotionController->MotionSource = FXRMotionControllerBase::LeftHandSourceId;
+	LeftMotionController->SetupAttachment(VRRoot);
+	LeftHandMesh = CreateDefaultSubobject<UStaticMeshComponent>(FName("Left Hand Mesh"));
+	LeftHandMesh->SetupAttachment(LeftMotionController);
 }
 
 // Called when the game starts or when spawned
 void AVRCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 // Called every frame
 void AVRCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	//Adjust character position to match the Movement of the HMD inside it's play space
 	FVector CameraOffset = Camera->GetComponentLocation() - GetActorLocation();
 	CameraOffset.Z = 0;
 	AddActorWorldOffset(CameraOffset);
 	VRRoot->AddWorldOffset(-CameraOffset);
+
+	UpdateDestinationMarker();
+}
+
+void AVRCharacter::UpdateDestinationMarker()
+{
+	FVector Start = LeftMotionController->GetComponentLocation() + LeftMotionController->GetForwardVector() * 5.f;
+	FVector End = Start + LeftMotionController->GetForwardVector() * MaxTeleportDistance;
+	FHitResult Hit;
+	DrawDebugLine(GetWorld(), Start, End, FColor::Green);
+	if (GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility))
+	{
+		DestinationMarker->SetVisibility(true);
+		DestinationMarker->SetWorldLocation(Hit.Location);
+	}
+	else
+	{
+		DestinationMarker->SetVisibility(false);
+	}
 }
 
 // Called to bind functionality to input

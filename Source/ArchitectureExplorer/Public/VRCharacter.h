@@ -25,19 +25,25 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
+	
 private:
 
 	/** Motion controller (right hand) */
-	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true")) class UMotionControllerComponent* RightMotionController = nullptr;
-
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true")) class UMotionControllerComponent* RightMotionController = nullptr;
+	UPROPERTY(VisibleAnywhere, Category = "Setup") class UStaticMeshComponent* RightHandMesh;
 	/** Motion controller (left hand) */
-	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true")) class UMotionControllerComponent* L_MotionController;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true")) class UMotionControllerComponent* LeftMotionController = nullptr;
+	UPROPERTY(VisibleAnywhere, Category = "Setup") class UStaticMeshComponent* LeftHandMesh;
 
-	class USceneComponent* VRRoot = nullptr;
-	class UCameraComponent* Camera = nullptr;
+	UPROPERTY() class USceneComponent* VRRoot = nullptr;
+	UPROPERTY() class UCameraComponent* Camera = nullptr;
+
+	UPROPERTY(VisibleAnywhere, Category = "Setup") class UStaticMeshComponent* DestinationMarker = nullptr;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Movement") float MoveSpeed = 10;
+	UPROPERTY(EditDefaultsOnly, Category = "Movement") float MaxTeleportDistance = 1500;
+
+	void UpdateDestinationMarker();
 	void MoveForward(float Scalar);
 	void StrafeRight(float Scalar);
 };
