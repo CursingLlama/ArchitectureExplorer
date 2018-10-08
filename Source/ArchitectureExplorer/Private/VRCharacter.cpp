@@ -4,8 +4,8 @@
 #include "Camera/CameraComponent.h"
 #include "Components/InputComponent.h"
 //#include "HeadMountedDisplayFunctionLibrary.h"
-//#include "MotionControllerComponent.h"
-//#include "XRMotionControllerBase.h" // for FXRMotionControllerBase::RightHandSourceId
+#include "MotionControllerComponent.h"
+#include "XRMotionControllerBase.h" // for FXRMotionControllerBase::RightHandSourceId
 
 
 // Sets default values
@@ -18,9 +18,9 @@ AVRCharacter::AVRCharacter()
 	Camera->SetupAttachment(GetRootComponent());
 	
 	// Create VR Controllers.
-	//R_MotionController = CreateDefaultSubobject<UMotionControllerComponent>(TEXT("R_MotionController"));
-	//R_MotionController->MotionSource = FXRMotionControllerBase::RightHandSourceId;
-	//R_MotionController->SetupAttachment(GetRootComponent());
+	//RightMotionController = CreateDefaultSubobject<UMotionControllerComponent>(TEXT("R_MotionController"));
+	//RightMotionController->MotionSource = FXRMotionControllerBase::RightHandSourceId;
+	//RightMotionController->SetupAttachment(GetRootComponent());
 	//L_MotionController = CreateDefaultSubobject<UMotionControllerComponent>(TEXT("L_MotionController"));
 	//L_MotionController->SetupAttachment(GetRootComponent());
 	

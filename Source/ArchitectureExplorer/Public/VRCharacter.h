@@ -29,10 +29,10 @@ public:
 private:
 
 	/** Motion controller (right hand) */
-	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))	class UMotionControllerComponent* R_MotionController;
+	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true")) class UMotionControllerComponent* RightMotionController = nullptr;
 
 	/** Motion controller (left hand) */
-	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))	class UMotionControllerComponent* L_MotionController;
+	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true")) class UMotionControllerComponent* L_MotionController;
 
 	class UCameraComponent* Camera = nullptr;
 

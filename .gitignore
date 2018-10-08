@@ -13,3 +13,4 @@ Saved
 *.xcodeproj
 *.xcworkspace
 Content/Dynamic/_Levels/StartingScene_BuiltData.uasset
+Content/Static/
