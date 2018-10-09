@@ -49,9 +49,11 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Setup") class UMaterialInterface* BlinderParentMaterial = nullptr;
 	UPROPERTY() class UMaterialInstanceDynamic* BlinderInstance = nullptr;
 	UPROPERTY() class UPostProcessComponent* PostProcessComponent = nullptr;
-
+	UPROPERTY(EditDefaultsOnly) class UCurveFloat* RadiusVsVelocity = nullptr;
 
 	bool FindTeleportLocation(FVector &OutLocation);
+	void UpdateBlinder();
+	FVector2D GetBlinderCenter();
 	void UpdateDestinationMarker();
 	void MoveForward(float Scalar);
 	void StrafeRight(float Scalar);

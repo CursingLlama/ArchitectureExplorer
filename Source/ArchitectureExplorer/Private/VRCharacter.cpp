@@ -68,7 +68,7 @@ void AVRCharacter::BeginPlay()
 		BlinderInstance = UMaterialInstanceDynamic::Create(BlinderParentMaterial, this);
 		PostProcessComponent->AddOrUpdateBlendable(BlinderInstance);
 
-		BlinderInstance->SetScalarParameterValue(FName("Radius"), 0.4f);
+		
 	}
 }
 
@@ -82,7 +82,49 @@ void AVRCharacter::Tick(float DeltaTime)
 	AddActorWorldOffset(CameraOffset);
 	VRRoot->AddWorldOffset(-CameraOffset);
 
+	UpdateBlinder();
+
 	UpdateDestinationMarker();
+}
+
+void AVRCharacter::UpdateBlinder()
+{
+	if (BlinderInstance && RadiusVsVelocity)
+	{
+		BlinderInstance->SetScalarParameterValue(FName("Radius"), RadiusVsVelocity->GetFloatValue(GetVelocity().Size()));
+	}
+	FVector2D Center = GetBlinderCenter();
+	BlinderInstance->SetVectorParameterValue(FName("Center"), FLinearColor(Center.X, Center.Y, 0));
+}
+
+FVector2D AVRCharacter::GetBlinderCenter()
+{
+	APlayerController* PlayerController = Cast<APlayerController>(GetController());
+	FVector MoveDirection = GetVelocity().GetSafeNormal();
+	if (PlayerController || MoveDirection.IsNearlyZero())
+	{
+		FVector WorldStationaryPoint;
+		if (FVector::DotProduct(Camera->GetForwardVector(), MoveDirection) > 0)
+		{
+			WorldStationaryPoint = Camera->GetComponentLocation() + MoveDirection * 100;
+		}
+		else
+		{
+			WorldStationaryPoint = Camera->GetComponentLocation() - MoveDirection * 100;
+		}
+		
+		FVector2D ScreenPoint;
+		PlayerController->ProjectWorldLocationToScreen(WorldStationaryPoint, ScreenPoint);
+
+		int32 ScreenX, ScreenY;
+		PlayerController->GetViewportSize(ScreenX, ScreenY);
+
+		float NewX = FMath::Clamp(ScreenPoint.X / ScreenX, 0.2f, 0.8f);
+		float NewY = ScreenPoint.Y / ScreenY;
+		return FVector2D(NewX, NewY);
+	}
+		
+	return FVector2D(0.5, 0.5);
 }
 
 bool AVRCharacter::FindTeleportLocation(FVector & OutLocation)
