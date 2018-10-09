@@ -19,13 +19,13 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
+public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-	
+
 private:
 
 	/** Motion controller (right hand) */
@@ -38,12 +38,24 @@ private:
 	UPROPERTY() class USceneComponent* VRRoot = nullptr;
 	UPROPERTY() class UCameraComponent* Camera = nullptr;
 
-	UPROPERTY(VisibleAnywhere, Category = "Setup") class UStaticMeshComponent* DestinationMarker = nullptr;
-
 	UPROPERTY(EditDefaultsOnly, Category = "Movement") float MoveSpeed = 10;
-	UPROPERTY(EditDefaultsOnly, Category = "Movement") float MaxTeleportDistance = 1500;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Movement") float MaxTeleportDistance = 1500;
+	UPROPERTY(EditDefaultsOnly, Category = "Movement") float TeleportFadeTime = 0.75f;
+	UPROPERTY(EditDefaultsOnly, Category = "Movement") FVector TeleportProjectionExtents = FVector(50, 50, 500);
+	UPROPERTY(VisibleAnywhere, Category = "Setup") class UStaticMeshComponent* DestinationMarker = nullptr;
+	UPROPERTY() FVector TeleportLocation;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Setup") class UMaterialInterface* BlinderParentMaterial = nullptr;
+	UPROPERTY() class UMaterialInstanceDynamic* BlinderInstance = nullptr;
+	UPROPERTY() class UPostProcessComponent* PostProcessComponent = nullptr;
+
+
+	bool FindTeleportLocation(FVector &OutLocation);
 	void UpdateDestinationMarker();
 	void MoveForward(float Scalar);
 	void StrafeRight(float Scalar);
+	void BeginTeleport();
+	void FinishTeleport();
+	void StartFade(float FromAlpha, float ToAlpha);
 };
