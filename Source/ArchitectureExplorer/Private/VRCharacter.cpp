@@ -3,6 +3,7 @@
 #include "VRCharacter.h"
 #include "Engine/World.h"
 #include "AI/Navigation/NavigationSystem.h"
+#include "Kismet/GameplayStatics.h"
 #include "Camera/CameraComponent.h"
 #include "Components/InputComponent.h"
 #include "Components/SceneComponent.h"
@@ -29,10 +30,6 @@ AVRCharacter::AVRCharacter()
 	VRRoot = CreateDefaultSubobject<USceneComponent>(FName("VR Root"));
 	VRRoot->SetupAttachment(GetRootComponent());
 
-	//Adjust HMD position for Oculus Rift TO DO: check for nullptr issue with first line
-	UHeadMountedDisplayFunctionLibrary::SetTrackingOrigin(EHMDTrackingOrigin::Floor);
-	VRRoot->SetRelativeLocation(FVector(0, 0, (GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight()) * -1));
-
 	//Add camera component for the HMD to use
 	Camera = CreateDefaultSubobject<UCameraComponent>(FName("Camera"));
 	Camera->SetupAttachment(VRRoot);
@@ -45,22 +42,44 @@ AVRCharacter::AVRCharacter()
 
 	// Create VR Controllers.
 	RightMotionController = CreateDefaultSubobject<UMotionControllerComponent>(TEXT("R_MotionController"));
-	RightMotionController->MotionSource = FXRMotionControllerBase::RightHandSourceId;
+	RightMotionController->SetTrackingMotionSource(FXRMotionControllerBase::RightHandSourceId);
+	RightMotionController->SetShowDeviceModel(true);
 	RightMotionController->SetupAttachment(VRRoot);
-	RightHandMesh = CreateDefaultSubobject<UStaticMeshComponent>(FName("Right Hand Mesh"));
-	RightHandMesh->SetupAttachment(RightMotionController);
-
+	
 	LeftMotionController = CreateDefaultSubobject<UMotionControllerComponent>(TEXT("L_MotionController"));
-	LeftMotionController->MotionSource = FXRMotionControllerBase::LeftHandSourceId;
+	LeftMotionController->SetTrackingMotionSource(FXRMotionControllerBase::LeftHandSourceId);
+	LeftMotionController->SetShowDeviceModel(true);
 	LeftMotionController->SetupAttachment(VRRoot);
-	LeftHandMesh = CreateDefaultSubobject<UStaticMeshComponent>(FName("Left Hand Mesh"));
-	LeftHandMesh->SetupAttachment(LeftMotionController);
+}
+
+// Called to bind functionality to input
+void AVRCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+	PlayerInputComponent->BindAxis(FName("MoveForward"), this, &AVRCharacter::MoveForward);
+	PlayerInputComponent->BindAxis(FName("StrafeRight"), this, &AVRCharacter::StrafeRight);
+	PlayerInputComponent->BindAction(FName("Teleport"), EInputEvent::IE_Released, this, &AVRCharacter::BeginTeleport);
+}
+
+void AVRCharacter::MoveForward(float Scalar)
+{
+	AddMovementInput(Camera->GetForwardVector(), MoveSpeed * Scalar);
+}
+
+void AVRCharacter::StrafeRight(float Scalar)
+{
+	AddMovementInput(Camera->GetRightVector(), MoveSpeed * Scalar);
 }
 
 // Called when the game starts or when spawned
 void AVRCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	//Adjust HMD position for Oculus Rift TO DO: check for nullptr issue with first line
+	UHeadMountedDisplayFunctionLibrary::SetTrackingOrigin(EHMDTrackingOrigin::Floor);
+	VRRoot->SetRelativeLocation(FVector(0, 0, (GetCapsuleComponent()->GetScaledCapsuleHalfHeight()) * -1));
+
 	DestinationMarker->SetVisibility(false);
 
 	if (BlinderParentMaterial)
@@ -92,9 +111,9 @@ void AVRCharacter::UpdateBlinder()
 	if (BlinderInstance && RadiusVsVelocity)
 	{
 		BlinderInstance->SetScalarParameterValue(FName("Radius"), RadiusVsVelocity->GetFloatValue(GetVelocity().Size()));
-	}
-	FVector2D Center = GetBlinderCenter();
-	BlinderInstance->SetVectorParameterValue(FName("Center"), FLinearColor(Center.X, Center.Y, 0));
+		FVector2D Center = GetBlinderCenter();
+		BlinderInstance->SetVectorParameterValue(FName("Center"), FLinearColor(Center.X, Center.Y, 0));
+	}	
 }
 
 FVector2D AVRCharacter::GetBlinderCenter()
@@ -127,24 +146,6 @@ FVector2D AVRCharacter::GetBlinderCenter()
 	return FVector2D(0.5, 0.5);
 }
 
-bool AVRCharacter::FindTeleportLocation(FVector & OutLocation)
-{
-	FVector Start = LeftMotionController->GetComponentLocation() + LeftMotionController->GetForwardVector() * 5.f;
-	FVector End = Start + LeftMotionController->GetForwardVector() * MaxTeleportDistance;
-	FHitResult Hit;
-
-	///DrawDebugLine(GetWorld(), Start, End, FColor::Green);
-	bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility);
-	if (!bHit) return false;
-
-	FNavLocation NavLocation;
-	bool bProjected = GetWorld()->GetNavigationSystem()->ProjectPointToNavigation(Hit.Location, NavLocation, TeleportProjectionExtents);
-	if (!bProjected) return false;
-
-	OutLocation = NavLocation.Location;
-	return true;
-}
-
 void AVRCharacter::UpdateDestinationMarker()
 {
 	FVector TeleLocation;
@@ -160,27 +161,32 @@ void AVRCharacter::UpdateDestinationMarker()
 	}
 }
 
-// Called to bind functionality to input
-void AVRCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+bool AVRCharacter::FindTeleportLocation(FVector & OutLocation)
 {
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-	PlayerInputComponent->BindAxis(FName("MoveForward"), this, &AVRCharacter::MoveForward);
-	PlayerInputComponent->BindAxis(FName("StrafeRight"), this, &AVRCharacter::StrafeRight);
-	PlayerInputComponent->BindAction(FName("Teleport"), EInputEvent::IE_Released, this, &AVRCharacter::BeginTeleport);
-}
+	FVector Start = LeftMotionController->GetComponentLocation() + LeftMotionController->GetForwardVector();
+	float Gravity = FMath::Abs(GetWorld()->GetGravityZ());
+	float Speed = FMath::Sqrt(Gravity * MaxTeleportDistance);
+	float SimTime = 2.1 * (Speed / Gravity);
+	FVector Velocity = LeftMotionController->GetForwardVector() * Speed;
+	
+	FPredictProjectilePathParams PathParams = FPredictProjectilePathParams(TeleportPathRadius, Start, Velocity, SimTime, ECC_Camera, this);
+	///PathParams.DrawDebugType = EDrawDebugTrace::ForOneFrame;
+	FPredictProjectilePathResult PathResult;
+	
+	bool bHit = UGameplayStatics::PredictProjectilePath(GetWorld(), PathParams, PathResult);
+	if (!bHit) return false;
 
-void AVRCharacter::MoveForward(float Scalar)
-{
-	AddMovementInput(Camera->GetForwardVector(), MoveSpeed * Scalar);
-}
+	FNavLocation NavLocation;
+	bool bProjected = GetWorld()->GetNavigationSystem()->ProjectPointToNavigation(PathResult.HitResult.Location, NavLocation, FVector(TeleportPathRadius));
+	if (!bProjected) return false;
 
-void AVRCharacter::StrafeRight(float Scalar)
-{
-	AddMovementInput(Camera->GetRightVector(), MoveSpeed * Scalar);
+	OutLocation = NavLocation.Location;
+	return true;
 }
 
 void AVRCharacter::BeginTeleport()
 {
+	if (!DestinationMarker->IsVisible()) return;
 	//Store teleport location so it doesn't change between Begin and Finish Teleport
 	TeleportLocation = DestinationMarker->GetComponentLocation() + FVector(0, 0, GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
 	StartFade(0, 1);

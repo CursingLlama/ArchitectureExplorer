@@ -30,10 +30,9 @@ private:
 
 	/** Motion controller (right hand) */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true")) class UMotionControllerComponent* RightMotionController = nullptr;
-	UPROPERTY(VisibleAnywhere, Category = "Setup") class UStaticMeshComponent* RightHandMesh;
 	/** Motion controller (left hand) */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true")) class UMotionControllerComponent* LeftMotionController = nullptr;
-	UPROPERTY(VisibleAnywhere, Category = "Setup") class UStaticMeshComponent* LeftHandMesh;
+	
 
 	UPROPERTY() class USceneComponent* VRRoot = nullptr;
 	UPROPERTY() class UCameraComponent* Camera = nullptr;
@@ -41,8 +40,8 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Movement") float MoveSpeed = 10;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Movement") float MaxTeleportDistance = 1500;
+	UPROPERTY(EditDefaultsOnly, Category = "Movement") float TeleportPathRadius = 34;
 	UPROPERTY(EditDefaultsOnly, Category = "Movement") float TeleportFadeTime = 0.75f;
-	UPROPERTY(EditDefaultsOnly, Category = "Movement") FVector TeleportProjectionExtents = FVector(50, 50, 500);
 	UPROPERTY(VisibleAnywhere, Category = "Setup") class UStaticMeshComponent* DestinationMarker = nullptr;
 	UPROPERTY() FVector TeleportLocation;
 
