@@ -67,6 +67,8 @@ void AVRCharacter::BeginPlay()
 	{
 		BlinderInstance = UMaterialInstanceDynamic::Create(BlinderParentMaterial, this);
 		PostProcessComponent->AddOrUpdateBlendable(BlinderInstance);
+
+		BlinderInstance->SetScalarParameterValue(FName("Radius"), 0.4f);
 	}
 }
 
