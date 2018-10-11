@@ -30,7 +30,13 @@ void AHandController::BeginPlay()
 void AHandController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+	
+	if (bIsClimbing)
+	{
+		FVector ClimbOffset = GetActorLocation() - ClimbingStartPosition;
+		GetAttachParentActor()->AddActorWorldOffset(-ClimbOffset);
+	}
+	
 }
 
 void AHandController::SetHand(FName Hand)
@@ -38,13 +44,33 @@ void AHandController::SetHand(FName Hand)
 	MotionController->SetTrackingMotionSource(Hand);
 }
 
-void AHandController::ActorBeginOverlap(AActor* OverlappedActor, AActor* OtherActor)
+void AHandController::Grip()
 {
-	if (bCanClimb) return;
-
-	bCanClimb = CanClimb();
 	if (bCanClimb)
 	{
+		bIsClimbing = true;
+		ClimbingStartPosition = GetActorLocation();
+		OtherController->Release();
+	}
+}
+
+void AHandController::Release()
+{
+	bIsClimbing = false;
+}
+
+void AHandController::PairController(AHandController* Controller)
+{
+	OtherController = Controller;
+	Controller->OtherController = this;
+}
+
+void AHandController::ActorBeginOverlap(AActor* OverlappedActor, AActor* OtherActor)
+{
+	bool bNewCanClimb = CanClimb();
+	if (!bCanClimb && bNewCanClimb)
+	{
+		bCanClimb = true;
 		APawn* Pawn = Cast<APawn>(GetAttachParentActor());
 		if (Pawn)
 		{

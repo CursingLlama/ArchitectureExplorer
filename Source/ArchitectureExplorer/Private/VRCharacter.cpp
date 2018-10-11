@@ -77,6 +77,7 @@ void AVRCharacter::BeginPlay()
 		RightMotionController->SetHand(FXRMotionControllerBase::RightHandSourceId);
 	}
 
+	LeftMotionController->PairController(RightMotionController);
 }
 
 // Called to bind functionality to input
@@ -86,6 +87,12 @@ void AVRCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	PlayerInputComponent->BindAxis(FName("MoveForward"), this, &AVRCharacter::MoveForward);
 	PlayerInputComponent->BindAxis(FName("StrafeRight"), this, &AVRCharacter::StrafeRight);
 	PlayerInputComponent->BindAction(FName("Teleport"), EInputEvent::IE_Released, this, &AVRCharacter::BeginTeleport);
+
+	PlayerInputComponent->BindAction(FName("GripLeft"), EInputEvent::IE_Pressed, this, &AVRCharacter::GripLeft);
+	PlayerInputComponent->BindAction(FName("GripLeft"), EInputEvent::IE_Released, this, &AVRCharacter::ReleaseLeft);
+	PlayerInputComponent->BindAction(FName("GripRight"), EInputEvent::IE_Pressed, this, &AVRCharacter::GripRight);
+	PlayerInputComponent->BindAction(FName("GripRight"), EInputEvent::IE_Released, this, &AVRCharacter::ReleaseRight);
+
 }
 
 void AVRCharacter::MoveForward(float Scalar)
@@ -98,6 +105,11 @@ void AVRCharacter::StrafeRight(float Scalar)
 	AddMovementInput(Camera->GetRightVector(), MoveSpeed * Scalar);
 }
 
+void AVRCharacter::GripLeft() {	LeftMotionController->Grip(); }
+void AVRCharacter::ReleaseLeft() { LeftMotionController->Release(); }
+void AVRCharacter::GripRight() { RightMotionController->Grip(); }
+void AVRCharacter::ReleaseRight() { RightMotionController->Release(); }
+
 // Called every frame
 void AVRCharacter::Tick(float DeltaTime)
 {
@@ -108,7 +120,7 @@ void AVRCharacter::Tick(float DeltaTime)
 	AddActorWorldOffset(CameraOffset);
 	VRRoot->AddWorldOffset(-CameraOffset);
 
-	UpdateBlinder();
+	//UpdateBlinder();
 
 	UpdateDestinationMarker();
 }
@@ -127,7 +139,7 @@ FVector2D AVRCharacter::GetBlinderCenter()
 {
 	APlayerController* PlayerController = Cast<APlayerController>(GetController());
 	FVector MoveDirection = GetVelocity().GetSafeNormal();
-	if (PlayerController || MoveDirection.IsNearlyZero())
+	if (PlayerController && !MoveDirection.IsNearlyZero())
 	{
 		FVector WorldStationaryPoint;
 		if (FVector::DotProduct(Camera->GetForwardVector(), MoveDirection) > 0)
@@ -223,7 +235,7 @@ void AVRCharacter::UpdateTeleportPath(const TArray<FPredictProjectilePathPointDa
 		DynamicMesh->SetStartAndEnd(StartPos, StartTangent, EndPos, EndTangent);
 		DynamicMesh->SetVisibility(true);
 	}
-	for (int32 i = Path.Num(); i < PathMeshPool.Num(); i++)
+	for (int32 i = Path.Num() - 1; i < PathMeshPool.Num(); i++)
 	{
 		PathMeshPool[i]->SetVisibility(false);
 	}

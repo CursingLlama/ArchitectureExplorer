@@ -72,12 +72,19 @@ private:
 	
 	void UpdateBlinder();
 	FVector2D GetBlinderCenter();
+	void MoveForward(float Scalar);
+	void StrafeRight(float Scalar);
+	
 	void UpdateDestinationMarker();
 	bool FindTeleportLocation(FVector &OutLocation);
 	void UpdateTeleportPath(const TArray<struct FPredictProjectilePathPointData>& Path);
-	void MoveForward(float Scalar);
-	void StrafeRight(float Scalar);
 	void BeginTeleport();
 	void FinishTeleport();
 	void StartFade(float FromAlpha, float ToAlpha);
+
+	void GripLeft();
+	void ReleaseLeft();
+	void GripRight();
+	void ReleaseRight();
+
 };

@@ -21,6 +21,10 @@ public:
 
 	void SetHand(FName Name);
 
+	void Grip();
+	void Release();
+	void PairController(AHandController* Controller);
+
 protected:
 
 	// Called when the game starts or when spawned
@@ -35,6 +39,9 @@ private:
 	UFUNCTION() void ActorEndOverlap(AActor* OverlappedActor, AActor* OtherActor);
 
 	bool CanClimb() const;
-	bool bCanClimb = false;
+	UPROPERTY() bool bCanClimb = false;
+	UPROPERTY() bool bIsClimbing = false;
+	UPROPERTY() FVector ClimbingStartPosition;
 	
+	UPROPERTY() AHandController* OtherController = nullptr;
 };
