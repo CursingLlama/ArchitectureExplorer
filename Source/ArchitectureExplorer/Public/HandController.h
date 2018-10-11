@@ -29,6 +29,7 @@ protected:
 private:	
 	
 	UPROPERTY(VisibleAnywhere) class UMotionControllerComponent* MotionController = nullptr;
+	UPROPERTY(EditDefaultsOnly) class UHapticFeedbackEffect_Base* HapticEffect = nullptr;
 	
 	UFUNCTION() void ActorBeginOverlap(AActor* OverlappedActor, AActor* OtherActor);
 	UFUNCTION() void ActorEndOverlap(AActor* OverlappedActor, AActor* OtherActor);
